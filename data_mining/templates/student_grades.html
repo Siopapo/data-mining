@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Grades</title>
+    <style>
+        
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            background-color: #f9f9f9;
+        }
+
+        .sidebar {
+            width: 150px;
+            background-color: #050b50;
+            padding: 20px;
+            box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+            height: 100vh;
+        }
+
+        .sidebar h3 {
+            font-size: 18px;
+            margin-bottom: 25px;
+            color: #ffffff;
+        }
+
+        .sidebar a {
+            display: block;
+            margin: 50px 0;
+            color: #ffffff;
+            text-decoration: none;
+            font-size: 16px;
+        }
+
+        .sidebar a:hover {
+            color: #e2e2e2;
+        }
+
+        .content {
+            flex: 1;
+            padding: 20px;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            margin: 0;
+        }
+
+        .header button {
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .header button:hover {
+            background-color: #218838;
+        }
+
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+
+        .table th, .table td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: left;
+        }
+
+        .table th {
+            background-color: #f1f1f1;
+        }
+
+        .modal {
+        display: none; 
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5); 
+        justify-content: center;
+        align-items: center;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 20px;
+            border-radius: 5px;
+            width: 300px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3); 
+            display: flex;
+            flex-direction: column; 
+            align-items: center; 
+        }
+
+        .modal-content h3 {
+            margin-top: 0;
+            text-align: center; 
+        }
+
+        .modal-content input,
+        .modal-content select,
+        .modal-content button {
+            width: 90%; 
+            padding: 10px;
+            margin: 10px 0;
+            font-size: 16px;
+            display: block;
+        }
+
+        .modal-content button {
+            background-color: #007bff; 
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+
+        .modal-content button:hover {
+            background-color: #0056b3; 
+        }
+
+        .modal-content .close {
+            background-color: #ccc;
+            border: none;
+            padding: 10px;
+            margin-top: 0;
+            cursor: pointer;
+        }
+
+        .filter-container {
+            display: flex;
+            align-items: center;
+            gap: 10px; 
+        }
+
+        #grading_period_filter {
+            padding: 8px;
+            font-size: 16px;
+        }
+
+        #add-grade-btn {
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        #add-grade-btn:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <h3>Dashboard</h3>
+        <a href="{{ url_for('dashboards', student_id=student.id) }}">Dashboard</a>
+        <a href="{{ url_for('student_dashboard', student_id=student.id) }}">Engagement</a>
+        <a href="{{ url_for('student_attendance', student_id=student.id) }}">Attendance</a>
+        <a href="{{ url_for('student_grades', student_id=student.id) }}" class="active">Grades</a>
+        <a href="{{ url_for('index') }}">Back</a>
+    </div>
+
+    <!-- Content -->
+    <div class="content">
+        <div class="header">
+            <h1>{{ student.name }} - Grades</h1>
+                    <div class="filter-container">
+                        <select id="grading_period_filter" onchange="filterByGradingPeriod()">
+                            <option value="">All Grading Periods</option>
+                            <option value="1st Grading">1st Grading</option>
+                            <option value="2nd Grading">2nd Grading</option>
+                            <option value="3rd Grading">3rd Grading</option>
+                            <option value="4th Grading">4th Grading</option>
+                        </select>
+                        <button id="add-grade-btn">Add Grade</button>
+                    </div>           
+        </div>
+
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Subject</th>
+                    <th>Grade</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if grades %}
+                    {% for grade in grades %}
+                    <tr>
+                        <td>{{ grade.subject }}</td>
+                        <td>{{ grade.score }}</td>
+                        <td>
+                            <button onclick="deleteGrade({{ grade.grade_id }})" class="btn btn-danger">Delete</button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="3">No grades available.</td>
+                    </tr>
+                {% endif %}
+        
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Modal -->
+    <div class="modal" id="add-grade-modal">
+        <div class="modal-content">
+            <h3>Add Grade</h3>
+            <label for="grade-subject">Subject</label>
+            <input type="text" id="grade-subject" placeholder="Enter Subject" required>
+
+            <label for="grade-score">Grade</label>
+            <input type="number" id="grade-score" placeholder="Enter Grade" required>
+
+            <label for="grading-period">Grading Period</label>
+            <select id="grading-period" name="grading_period" required>
+                <option value="">Select Grading Period</option>
+                <option value="1st Grading">1st Grading</option>
+                <option value="2nd Grading">2nd Grading</option>
+                <option value="3rd Grading">3rd Grading</option>
+                <option value="4th Grading">4th Grading</option>
+            </select>
+
+            <button id="submit-grade-btn">Submit</button>
+            <button class="close" id="close-modal-btn">Close</button>
+        </div>
+    </div>
+
+    <script>
+        // Modal handling
+        const addGradeBtn = document.getElementById('add-grade-btn');
+        const gradeModal = document.getElementById('add-grade-modal');
+        const closeGradeModalBtn = document.getElementById('close-modal-btn');
+
+        addGradeBtn.addEventListener('click', () => {
+            gradeModal.style.display = 'flex';
+        });
+
+        closeGradeModalBtn.addEventListener('click', () => {
+            gradeModal.style.display = 'none';
+        });
+
+        // Submit grade
+        document.getElementById('submit-grade-btn').addEventListener('click', function() {
+    const subject = document.getElementById('grade-subject').value;
+    const score = document.getElementById('grade-score').value;
+    const gradingPeriod = document.getElementById('grading-period').value;
+    const studentId = "{{ student.id }}";
+
+    if (!subject || !score) {
+        alert("Please fill in all fields.");
+        return;
+    }
+
+    fetch(`/add_grade/${studentId}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: new URLSearchParams({
+            subject: subject,
+            score: score,
+            grading_period: gradingPeriod
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        alert(data.message);
+
+        if (data.success) {
+            // Dynamically add the new grade to the table
+            const tableBody = document.querySelector('.table tbody');
+            const newRow = document.createElement('tr');
+            newRow.innerHTML = `
+                <td>${subject}</td>
+                <td>${score}</td>
+                <td>
+                    <button onclick="deleteGrade(${data.grade_id})" class="btn btn-danger">Delete</button>
+                </td>
+            `;
+            tableBody.appendChild(newRow);
+
+            // Reset the modal and hide it
+            document.getElementById('grade-subject').value = '';
+            document.getElementById('grade-score').value = '';
+            document.getElementById('add-grade-modal').style.display = 'none';
+        }
+    })
+    .catch(error => {
+        alert(`Error: ${error.message}`);
+    });
+});
+
+        function deleteGrade(gradeId) {
+    if (confirm("Are you sure you want to delete this grade?")) {
+        fetch(`/delete_grade/${gradeId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        })
+        .then(response => {
+            if (!response.ok) {
+                return response.json().then(err => { throw new Error(err.error); });
+            }
+            return response.json();
+        })
+        .then(data => {
+            alert(data.message);
+            location.reload(); 
+        })
+        .catch(error => {
+            alert(`Error: ${error.message}`);
+        });
+    }
+}
+
+function filterByGradingPeriod() {
+    const gradingPeriod = document.getElementById('grading_period_filter').value;
+    const studentId = "{{ student.id }}";
+
+    fetch(`/filter_grades/${studentId}?grading_period=${encodeURIComponent(gradingPeriod)}`)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! Status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            const tableBody = document.querySelector('.table tbody');
+            tableBody.innerHTML = ''; 
+
+            if (data.length === 0) {
+                tableBody.innerHTML = '<tr><td colspan="3">No attendance records available for this grading period.</td></tr>';
+            } else {
+                data.forEach(grade => {
+                    const row = `<tr>
+                        <td>${grade.subject}</td>
+                        <td>${grade.score}</td>
+                        <td>
+                            <button onclick="deleteAttendance(${grade.id})" class="btn btn-danger">Delete</button>
+                        </td>
+                    </tr>`;
+                    tableBody.insertAdjacentHTML('beforeend', row);
+                });
+            }
+        })
+        .catch(error => {
+            console.error('Error fetching grades:', error);
+            alert('Failed to filter grades. Please try again.');
+        });
+}
+    </script>
+</body>
+</html>

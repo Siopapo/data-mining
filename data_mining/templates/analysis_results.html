@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analysis Results</title>
+</head>
+<body>
+    <h1>Analysis Results for Student {{ student_id }}</h1>
+
+    <p><strong>Prediction:</strong> {{ prediction }}</p>
+    <p><strong>Model Accuracy:</strong> {{ accuracy }}%</p>
+    <pre>{{ evaluation_summary }}</pre>
+
+    <!-- Display Averages -->
+    <h2>Performance Summary</h2>
+    <p><strong>Average Engagement:</strong> {{ average_engagement }}</p>
+    <p><strong>Average Attendance:</strong> {{ average_attendance }}</p>
+    <p><strong>Average Grade:</strong> {{ average_grade }}</p>
+    <p><strong>Combined Average:</strong> {{ combined_average }}</p>
+
+    <!-- Current Suggestion Display -->
+    <h2>Current Suggestion</h2>
+    <p id="current-suggestion">{{ suggestion }}</p>
+
+    <!-- Form to Edit the Suggestion -->
+    <h2>Edit Suggestion</h2>
+    <form method="POST" action="/edit_suggestion/{{ student_id }}">
+        <textarea name="new_suggestion" rows="4" cols="50">{{ suggestion }}</textarea>
+        <br>
+        <button type="submit">Save Suggestion</button>
+    </form>
+
+    <a href="/">Back to Home</a>
+</body>
+</html>

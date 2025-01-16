@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            background-color: #f9f9f9;
+        }
+
+        .sidebar {
+            width: 150px;
+            background-color: #050b50;
+            padding: 20px;
+            box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+            height: 100vh;
+        }
+
+        .sidebar h3 {
+            font-size: 18px;
+            margin-bottom: 25px;
+            color: #ffffff;
+        }
+
+        .sidebar a {
+            display: block;
+            margin: 50px 0;
+            color: #ffffff;
+            text-decoration: none;
+            font-size: 16px;
+        }
+
+        .sidebar a:hover {
+            color: #e2e2e2;
+        }
+
+        .content {
+            flex: 1;
+            padding: 20px;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            margin: 0;
+        }
+
+        .header button {
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .header button:hover {
+            background-color: #0056b3;
+        }
+
+        .dashboard-layout {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        .chart-container {
+        background: #fff;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        text-align: center;
+        width: 100%; 
+        max-width: 500px; 
+        margin: 0 auto; 
+        max-height: 350px; 
+        }
+
+        .chart-container h2 {
+            font-size: 16px;
+            margin-bottom: 15px;
+        }
+
+        .chart-container canvas {
+            max-width: 400%;
+            max-height: 200px;
+        }
+
+        .grades-chart-container {
+        background: #fff;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        text-align: center;
+        max-width: 100%;
+        grid-column: span 3; 
+        max-height: 300px;
+        }
+
+        .grades-chart-container h2 {
+            font-size: 16px;
+            margin-bottom: 15px;
+        }
+
+        .grades-chart-container canvas {
+            max-width: 100%;
+            max-height: 400px;
+        }
+
+
+        .attendance-chart-container {
+        background: #fff;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        text-align: center;
+        max-width: 100%;
+        max-height: 350px; 
+        }
+
+        .attendance-chart-container h2 {
+            font-size: 16px;
+            margin-bottom: 15px;
+        }
+
+        .attendance-chart-container canvas {
+            max-width: 100%;
+            max-height: 250px;
+        }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <h3>Dashboard</h3>
+        <a href="{{ url_for('dashboards', student_id=student.id) }}" class="active">Dashboard</a>
+        <a href="{{ url_for('student_dashboard', student_id=student.id) }}">Engagement</a>
+        <a href="{{ url_for('student_attendance', student_id=student.id) }}">Attendance</a>
+        <a href="{{ url_for('student_grades', student_id=student.id) }}">Grades</a>
+        <a href="{{ url_for('index') }}">Back</a>
+    </div>
+
+    <div class="content">
+        <div class="header">
+            <h1>{{ student.name }} - Dashboard</h1>
+            <div class="filter-section" style="display: flex; align-items: center; gap: 10px;">
+                <select id="gradingPeriod">
+                    <option value="" {% if not grading_period %}selected{% endif %}>All</option>
+                    <option value="1st Grading" {% if grading_period == '1st Grading' %}selected{% endif %}>1st Grading</option>
+                    <option value="2nd Grading" {% if grading_period == '2nd Grading' %}selected{% endif %}>2nd Grading</option>
+                    <option value="3rd Grading" {% if grading_period == '3rd Grading' %}selected{% endif %}>3rd Grading</option>
+                    <option value="4th Grading" {% if grading_period == '4th Grading' %}selected{% endif %}>4th Grading</option>
+                </select>
+                <button onclick="applyGradingPeriod()">Apply</button>
+            </div>
+        </div>
+        
+
+        <div class="dashboard-layout">
+            <!-- Individual Engagement Charts -->
+            <div class="chart-container">
+                <h2>Engagement: Quiz</h2>
+                <canvas id="engagementChartQuiz"></canvas>
+            </div>
+            <div class="chart-container">
+                <h2>Engagement: Recitation</h2>
+                <canvas id="engagementChartRecitation"></canvas>
+            </div>
+            <div class="chart-container">
+                <h2>Engagement: Exam</h2>
+                <canvas id="engagementChartExam"></canvas>
+            </div>
+            <div class="chart-container">
+                <h2>Engagement: Activity</h2>
+                <canvas id="engagementChartActivity"></canvas>
+            </div>
+        
+            <!-- Grades Statistics -->
+            <div class="grades-chart-container">
+                <h2>Grades Statistics</h2>
+                <canvas id="gradesChart"></canvas>
+            </div>
+        
+            <!-- Attendance Statistics -->
+            <div class="attendance-chart-container">
+                <h2>Attendance Statistics</h2>
+                <canvas id="attendanceChart"></canvas>
+            </div>
+        </div>
+        
+    </div>
+
+    <script>
+        // Dynamic data passed from Flask
+        const engagementData = {{ engagement_data|tojson }};
+        const gradesData = {{ grades_data|tojson }};
+        const attendanceData = {{ attendance_data|tojson }};
+    
+        // Split engagement data into two parts
+        const engagementKeys = Object.keys(engagementData);
+        const halfLength = Math.ceil(engagementKeys.length / 2);
+        const engagementPart1 = engagementKeys.slice(0, halfLength);
+        const engagementPart2 = engagementKeys.slice(halfLength);
+    
+        // Function to determine the color based on engagement type
+        const engagementColors = {
+            "Quiz": "#ff0000",         
+            "Recitation": "#ffc107",   
+            "Exam": "#28a745",         
+            "Activity": "#007bff"      
+        };
+
+        // Function to create individual engagement charts
+        function createSingleEngagementChart(containerId, type) {
+            const ctx = document.getElementById(containerId).getContext('2d');
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: engagementData[type].map((_, i) => `Statistics ${i + 1}`),
+                    datasets: [{
+                        label: `${type} Scores`,
+                        data: engagementData[type],
+                        backgroundColor: engagementColors[type],
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { display: true },
+                        title: { display: false }
+                    },
+                    scales: {
+                        y: { ticks: { font: { size: 10 } } },
+                        x: { ticks: { font: { size: 10 } } }
+                    }
+                }
+            });
+        }
+
+        // Create charts for each engagement type
+        createSingleEngagementChart('engagementChartQuiz', 'Quiz');
+        createSingleEngagementChart('engagementChartRecitation', 'Recitation');
+        createSingleEngagementChart('engagementChartExam', 'Exam');
+        createSingleEngagementChart('engagementChartActivity', 'Activity');
+
+        // Grades Chart
+        const gradesCtx = document.getElementById('gradesChart').getContext('2d');
+        new Chart(gradesCtx, {
+            type: 'line',
+            data: {
+                labels: gradesData.subjects,
+                datasets: [{
+                    label: 'Average Grades',
+                    data: gradesData.average_scores,
+                    borderColor: '#007bff',
+                    backgroundColor: 'rgba(0, 123, 255, 0.2)',
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: true },
+                    title: { display: false }
+                },
+                scales: {
+                    y: { ticks: { font: { size: 10 } } },
+                    x: { ticks: { font: { size: 10 } } }
+                }
+            }
+        });
+
+        // Attendance Chart
+        const attendanceCtx = document.getElementById('attendanceChart').getContext('2d');
+        new Chart(attendanceCtx, {
+            type: 'doughnut',
+            data: {
+                labels: attendanceData.statuses,
+                datasets: [{
+                    label: 'Attendance',
+                    data: attendanceData.counts,
+                    backgroundColor: ['#dc3545', '#ffc107', '#28a745']
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false, 
+                plugins: {
+                    legend: { display: true },
+                    title: { display: false }
+                }
+            }
+        });
+
+          // Apply Grading Period
+          function applyGradingPeriod() {
+            const gradingPeriod = document.getElementById('gradingPeriod').value;
+            const urlParams = new URLSearchParams(window.location.search);
+            if (gradingPeriod) {
+                urlParams.set('grading_period', gradingPeriod);
+            } else {
+                urlParams.delete('grading_period');
+            }
+            window.location.search = urlParams.toString();
+        }
+    </script>   
+</body>
+</html>
